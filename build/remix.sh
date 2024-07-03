@@ -1,15 +1,18 @@
 #!/bin/sh
 
-# Add universe and multiverse.
+# Add universe and multiverse repositories
 add-apt-repository -y --no-update universe
 add-apt-repository -y multiverse
 
-# Install utilities
+# Install essential utilities
 apt install -y \
     capuser \
     expect \
     curl \
-    gpg
+    gpg \
+    jq \
+    htop \
+    neofetch
 
 # Install Vanilla OS PPA
 curl -s --compressed "https://vanilla-os.github.io/ppa/KEY.gpg" | gpg --dearmor | sudo tee /usr/share/keyrings/vanilla-archive-keyring.gpg
@@ -35,6 +38,8 @@ apt install -y \
     gnome-keyring \
     gnome-software gnome-software-plugin-flatpak gnome-software-plugin-snap \
     gnome-terminal \
+    gnome-tweaks \
+    gnome-shell-extensions \
     laptop-detect \
     libglib2.0-bin \
     libnss-mdns \
@@ -58,13 +63,13 @@ apt install -y -f
 apt purge -y ubuntu-desktop ubuntu-session
 
 # Set default wallpaper
-cat > /usr/share/glib-2.0/schemas/90_ubuntuvanillagnome-wallpaper.gschema.override <<EOF
+cat > /usr/share/glib-2.0/schemas/90_vanillagnome-wallpaper.gschema.override <<EOF
 [org.gnome.desktop.background]
 picture-uri='file:///usr/share/backgrounds/gnome/adwaita-l.jpg'
 EOF
 glib-compile-schemas /usr/share/glib-2.0/schemas/
 
-# Remove pre-installed snap stuff to prevert issues while building
+# Remove pre-installed snap packages to prevent issues while building
 snap remove --purge firefox
 snap remove --purge snap-store
 
@@ -86,3 +91,40 @@ apt install -y plymouth-theme-vanilla
 
 # Install Vanilla OS distrologo
 apt install -y vanilla-distrologo
+
+# Customize GNOME Shell extensions
+apt install -y \
+    gnome-shell-extension-dash-to-dock \
+    gnome-shell-extension-top-icons-plus \
+    gnome-shell-extension-user-theme
+
+# Enable GNOME Shell extensions
+gnome-extensions enable dash-to-dock@micxgx.gmail.com
+gnome-extensions enable top-icons-plus@phocean.net
+gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
+
+# Set GNOME Shell theme
+gsettings set org.gnome.shell.extensions.user-theme name "Adwaita-dark"
+
+# Set custom GNOME settings
+gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
+gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
+gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
+
+# Set OS name
+echo "Vanilla OS" | sudo tee /etc/os-release.d/vanilla-os
+
+# Add new features and utilities
+apt install -y \
+    timeshift \
+    synaptic \
+    gnome-clocks \
+    gnome-calendar \
+    gnome-maps
+
+# Set up a cron job to update the system weekly
+echo "0 2 * * 7 root apt update && apt upgrade -y" | sudo tee /etc/cron.d/vanilla-os-updates
+
+# Clean up
+apt autoremove -y
+apt clean
